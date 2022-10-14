@@ -9,7 +9,7 @@ import envVars from "@shared/env-vars";
 import { CustomError } from "@shared/errors";
 import { NodeEnvs } from "@shared/enums";
 import { urlRouter } from "@routes/api";
-
+import "./utils/getIndex";
 const app = express();
 
 app.use(express.json());
