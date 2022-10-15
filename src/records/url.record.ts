@@ -2,7 +2,7 @@ import { linksDB } from "../utils/db";
 import { ObjectId } from "mongodb";
 import { encode } from "base62";
 import { CustomError } from "@shared/errors";
-import hashPassword from "../utils/hash";
+import { hashPassword } from "../utils/hash";
 let currentDBIndex: number;
 (async () => {
   const index = await linksDB
@@ -31,7 +31,17 @@ export class UrlRecord implements IClass {
   readonly password?: string | null;
   readonly deleteAfterRead?: boolean;
   readonly analitics?: boolean;
-  constructor({ destinationUrl, encodedIndex }: IClass) {
+  constructor({
+    destinationUrl,
+    encodedIndex,
+    _id,
+    analitics,
+    customUrl,
+    deleteAfterRead,
+    password,
+  }: IClass) {
+    console.log({ encodedIndex, customUrl });
+
     this.destinationUrl =
       destinationUrl.includes("https://") || destinationUrl.includes("http://")
         ? destinationUrl
@@ -39,10 +49,13 @@ export class UrlRecord implements IClass {
     if (encodedIndex) {
       this.encodedIndex = encodedIndex;
     } else {
-      this.encodedIndex = this.customUrl
-        ? this.customUrl
-        : encode(currentDBIndex);
+      this.encodedIndex = customUrl ? customUrl : encode(currentDBIndex);
     }
+    this._id = _id;
+    this.analitics = analitics;
+    this.customUrl = customUrl;
+    this.deleteAfterRead = deleteAfterRead;
+    this.password = password;
   }
 
   async insert() {
@@ -85,13 +98,14 @@ export class UrlRecord implements IClass {
       }
     }
     // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
+    console.log(this.password);
 
     const returnData = {
       link: `${process.env.WEBURL}/${this.encodedIndex}`,
       destinationUrl: this.destinationUrl,
       analitics: this.analitics ?? false,
       deleteAfterRead: this.deleteAfterRead ?? false,
-      isProtected: this.password,
+      isProtected: Boolean(this.password),
     };
     return returnData;
   }
