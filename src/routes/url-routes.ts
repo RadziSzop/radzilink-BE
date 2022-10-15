@@ -1,17 +1,45 @@
 import { Request, Response } from "express";
-import { linksDB } from "src/utils/db";
 import { UrlRecord } from "src/records/url.record";
 
 export const postUrl = async (req: Request, res: Response) => {
-  const newUrl = new UrlRecord({
+  const urlRec = new UrlRecord({
     destinationUrl: req.body.destinationUrl,
     analitics: req.body.analitics,
     customUrl: req.body.customUrl,
     deleteAfterRead: req.body.deleteAfterRead,
     password: req.body.password,
   });
-  await newUrl.insert();
-  // console.log(await newUrl.insert());
+  const returnData = await urlRec.insert();
 
-  return res.send("test");
+  return res.json(returnData);
+};
+
+export const getUrl = async (req: Request, res: Response) => {
+  const url = await UrlRecord.find(req.params.url);
+  const urlRec = new UrlRecord({
+    _id: url._id,
+    destinationUrl: url.destinationUrl,
+    analitics: url.analitics,
+    customUrl: url.isCustom ? url.customUrl : null,
+    deleteAfterRead: url.deleteAfterRead,
+    password: url.password,
+    encodedIndex: req.params.url,
+  });
+  const returnData = url.password
+    ? {
+        isProtected: true,
+      }
+    : {
+        isProtected: false,
+        data: {
+          link: `${process.env.WEBURL}/${req.params.url}`,
+          destinationUrl: url.destinationUrl,
+          analitics: url.analitics,
+          deleteAfterRead: url.deleteAfterRead,
+        },
+      };
+  if (url.deleteAfterRead && !url.password) {
+    urlRec.delete();
+  }
+  return res.json(returnData);
 };

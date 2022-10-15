@@ -2,7 +2,7 @@ import { linksDB } from "../utils/db";
 import { ObjectId } from "mongodb";
 import { encode } from "base62";
 import { CustomError } from "@shared/errors";
-// import { lastIndex } from "../utils/getIndex";
+import hashPassword from "../utils/hash";
 let currentDBIndex: number;
 (async () => {
   const index = await linksDB
@@ -10,43 +10,46 @@ let currentDBIndex: number;
     .sort({ index: -1 })
     .limit(1)
     .toArray();
-  console.log(index);
-  console.log(index.length > 0);
 
   currentDBIndex = index.length > 0 ? index[0].index : 0;
-  console.log(currentDBIndex);
+  console.log({ currentDBIndex });
 })();
-interface IClassProps {
+interface IClass {
   _id?: ObjectId;
+  encodedIndex?: string;
   destinationUrl: string;
   customUrl?: string | null;
   password?: string | null;
   deleteAfterRead?: boolean;
   analitics?: boolean;
 }
-export class UrlRecord {
-  destinationUrl: string;
+export class UrlRecord implements IClass {
+  _id?: ObjectId;
   encodedIndex: string;
-  constructor(private props: IClassProps) {
+  readonly destinationUrl: string;
+  readonly customUrl?: string | null;
+  readonly password?: string | null;
+  readonly deleteAfterRead?: boolean;
+  readonly analitics?: boolean;
+  constructor({ destinationUrl, encodedIndex }: IClass) {
     this.destinationUrl =
-      props.destinationUrl.includes("https://") ||
-      props.destinationUrl.includes("http://")
-        ? props.destinationUrl
-        : `https://${props.destinationUrl}`;
-    this.encodedIndex = this.props.customUrl
-      ? this.props.customUrl
-      : encode(currentDBIndex);
+      destinationUrl.includes("https://") || destinationUrl.includes("http://")
+        ? destinationUrl
+        : `https://${destinationUrl}`;
+    if (encodedIndex) {
+      this.encodedIndex = encodedIndex;
+    } else {
+      this.encodedIndex = this.customUrl
+        ? this.customUrl
+        : encode(currentDBIndex);
+    }
   }
-  async insert() {
-    console.log("index", currentDBIndex);
 
+  async insert() {
     const insertIfDoesntExist = async () => {
-      if (!Boolean(this.props.customUrl)) {
+      if (!Boolean(this.customUrl)) {
         this.encodedIndex = encode(++currentDBIndex);
       }
-      console.log("encoded", this.encodedIndex);
-
-      console.log(Boolean(this.props.customUrl));
 
       const { upsertedId } = await linksDB.updateOne(
         {
@@ -55,16 +58,15 @@ export class UrlRecord {
         {
           $setOnInsert: {
             destinationUrl: this.destinationUrl,
-            // HASH password
-            password: this.props.password ? this.props.password : null,
-            deleteAfterRead: this.props.deleteAfterRead
-              ? this.props.deleteAfterRead
+            password: this.password ? await hashPassword(this.password) : null,
+            deleteAfterRead: this.deleteAfterRead
+              ? this.deleteAfterRead
               : false,
-            analitics: this.props.analitics ? this.props.analitics : false,
+            analitics: this.analitics ? this.analitics : false,
             encodedIndex: this.encodedIndex,
             createdAt: new Date(),
-            isCustom: Boolean(this.props.customUrl),
-            index: Boolean(this.props.customUrl) ? null : currentDBIndex,
+            isCustom: Boolean(this.customUrl),
+            index: currentDBIndex,
           },
         },
         { upsert: true }
@@ -75,31 +77,40 @@ export class UrlRecord {
     while (true) {
       const upsertedId = await insertIfDoesntExist();
       if (upsertedId) {
-        this.props._id = upsertedId;
+        this._id = upsertedId;
         break;
       }
-      if (!upsertedId && Boolean(this.props.customUrl)) {
+      if (!upsertedId && Boolean(this.customUrl)) {
         throw new CustomError("This url is already taken.", 409);
       }
     }
-    // from biggest index (non custom), add 1 until not found empty
-    const returnData: any = { ...this.props };
-    delete returnData._id;
-    delete returnData.password;
-    returnData.destinationUrl = this.destinationUrl;
-    returnData.encodedIndex = `${process.env.URL}/${this.encodedIndex}`;
-    console.log(returnData);
+    // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
 
+    const returnData = {
+      link: `${process.env.WEBURL}/${this.encodedIndex}`,
+      destinationUrl: this.destinationUrl,
+      analitics: this.analitics ?? false,
+      deleteAfterRead: this.deleteAfterRead ?? false,
+      isProtected: this.password,
+    };
     return returnData;
   }
 
   async delete() {
-    if (!this.props._id) {
+    if (!this._id) {
       throw new Error("Can't delete url without proper ID.");
     } else {
       await linksDB.deleteOne({
-        _id: this.props._id,
+        _id: this._id,
       });
+    }
+  }
+  static async find(encodedIndex: string) {
+    const link = await linksDB.findOne({ encodedIndex: encodedIndex });
+    if (link) {
+      return link;
+    } else {
+      throw new CustomError("This url doesn't exist", 404);
     }
   }
   //   async update() {
@@ -111,20 +122,5 @@ export class UrlRecord {
   //         title: String(this.title),
   //       }
   //     );
-  //   }
-
-  //   static async findAll() {
-  //     return (await (await linksDB.find()).toArray()).map(
-  //       (obj) => new TodoRecord(obj)
-  //     );
-  //   }
-
-  //   static async findAllWithCursor() {
-  //     return /*await*/ linksDB.find();
-  //   }
-
-  //   static async find(id) {
-  //     const item = await linksDB.findOne({ _id: ObjectId(String(id)) });
-  //     return item === null ? null : new TodoRecord(item);
   //   }
 }
