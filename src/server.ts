@@ -9,8 +9,9 @@ import envVars from "@shared/env-vars";
 import { CustomError } from "@shared/errors";
 import { NodeEnvs } from "@shared/enums";
 import { urlRouter } from "@routes/api";
+import cors from "cors";
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

@@ -11,7 +11,6 @@ export const postUrl = async (req: Request, res: Response) => {
     password: req.body.password,
   });
   const returnData = await urlRec.insert();
-
   return res.json(returnData);
 };
 
