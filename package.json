@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npx ts-node build.ts",
-    "lint": "npx eslint --ext .ts src/",
+    "build": "yarn ts-node build.ts",
+    "lint": "yarn eslint --ext .ts src/",
     "start": "node -r module-alias/register ./dist --env=production",
     "dev": "nodemon"
   },

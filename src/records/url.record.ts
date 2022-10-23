@@ -3,6 +3,11 @@ import { ObjectId } from "mongodb";
 import { encode } from "base62";
 import { CustomError } from "@shared/errors";
 import { hashPassword } from "../utils/hash";
+import {
+  UrlConstructorInterface,
+  UrlDatabaseFind,
+  UrlRecordInterface,
+} from "src/types/urlRecordTypes";
 let currentDBIndex: number;
 (async () => {
   const index = await linksDB
@@ -10,20 +15,15 @@ let currentDBIndex: number;
     .sort({ index: -1 })
     .limit(1)
     .toArray();
-
+  if (typeof index[0].index !== "number") {
+    throw new Error("Couldn't get current DB index.");
+  }
   currentDBIndex = index.length > 0 ? index[0].index : 0;
   console.log({ currentDBIndex });
 })();
-interface IClass {
-  _id?: ObjectId;
-  encodedIndex?: string;
-  destinationUrl: string;
-  customUrl?: string | null;
-  password?: string | null;
-  deleteAfterRead?: boolean;
-  analitics?: boolean;
-}
-export class UrlRecord implements IClass {
+const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
+// TODO: create config file for geting env variables
+export class UrlRecord implements UrlRecordInterface {
   _id?: ObjectId;
   encodedIndex: string;
   readonly destinationUrl: string;
@@ -39,7 +39,7 @@ export class UrlRecord implements IClass {
     customUrl,
     deleteAfterRead,
     password,
-  }: IClass) {
+  }: UrlConstructorInterface) {
     console.log({ encodedIndex, customUrl });
 
     this.destinationUrl =
@@ -86,9 +86,9 @@ export class UrlRecord implements IClass {
       );
       return upsertedId;
     };
-
-    while (true) {
-      const upsertedId = await insertIfDoesntExist();
+    let upsertedId: false | ObjectId = false;
+    while (!upsertedId) {
+      upsertedId = await insertIfDoesntExist();
       if (upsertedId) {
         this._id = upsertedId;
         break;
@@ -98,10 +98,10 @@ export class UrlRecord implements IClass {
       }
     }
     // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
-    console.log(this.password);
+    console.log("password", this.password);
 
     const returnData = {
-      link: `${process.env.WEBURL}/${this.encodedIndex}`,
+      link: `${WEBURL}/${this.encodedIndex}`,
       destinationUrl: this.destinationUrl,
       analitics: this.analitics ?? false,
       deleteAfterRead: this.deleteAfterRead ?? false,
@@ -114,13 +114,19 @@ export class UrlRecord implements IClass {
     if (!this._id) {
       throw new Error("Can't delete url without proper ID.");
     } else {
-      await linksDB.deleteOne({
+      const deleted = await linksDB.deleteOne({
         _id: this._id,
       });
+      return deleted;
     }
   }
+
+  // find: (encodedIndex: string) => Promise<UrlDatabaseFind>;
   static async find(encodedIndex: string) {
-    const link = await linksDB.findOne({ encodedIndex: encodedIndex });
+    const link = (await linksDB.findOne({
+      encodedIndex: encodedIndex,
+    })) as UrlDatabaseFind;
+
     if (link) {
       return link;
     } else {
