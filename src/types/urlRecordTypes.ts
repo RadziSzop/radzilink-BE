@@ -4,6 +4,7 @@ export interface GetUrlInsertInterface {
   destinationUrl: string;
   analitics: boolean;
   deleteAfterRead: boolean;
+  deleteTime: number | boolean;
   isProtected: boolean;
 }
 export interface GetUrlDeleteInterface {
@@ -17,6 +18,7 @@ export interface UrlDatabaseFind extends WithId<Document> {
   createdAt: Date;
   deleteAfterRead: boolean;
   destinationUrl: string;
+  deleteTime: number | boolean;
   index: number;
   isCustom: boolean;
   password: string;
@@ -25,9 +27,10 @@ export interface UrlDatabaseFind extends WithId<Document> {
 
 export interface UrlConstructorInterface {
   _id?: ObjectId;
-  encodedIndex?: string;
   destinationUrl: string;
+  encodedIndex?: string;
   customUrl?: string | null;
+  deleteTime?: number | null;
   password?: string | null;
   deleteAfterRead?: boolean;
   analitics?: boolean;

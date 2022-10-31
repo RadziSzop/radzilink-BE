@@ -6,5 +6,6 @@ export class CustomError extends Error {
   constructor(msg: string, httpStatus: number) {
     super(msg);
     this.HttpStatus = httpStatus;
+    console.log("test", httpStatus, msg);
   }
 }

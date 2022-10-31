@@ -42,6 +42,13 @@ const postUrlSchema = z.object({
     })
     .optional()
     .or(z.null({ invalid_type_error: "analitics must be a boolean. " })),
+  deleteTime: z
+    .number({
+      invalid_type_error: "Delete after time must be a boolean",
+    })
+    .min(Math.floor(new Date().getTime() / 1000), "You can't set past date")
+    .optional()
+    .or(z.null()),
 });
 type validationType = "postUrl";
 export const validate = (type: validationType): RequestHandler => {

@@ -1,3 +1,4 @@
+import { CustomError } from "@shared/errors";
 import { Request, Response } from "express";
 import { UrlRecord } from "src/records/url.record";
 import { getProtectedUrlBody, postUrlBody } from "src/types/urlRoutesTypes";
@@ -6,12 +7,15 @@ const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
 
 export const postUrl = async (req: Request, res: Response) => {
   const body = req.body as postUrlBody;
+  console.log({ body });
+
   const urlRec = new UrlRecord({
     destinationUrl: body.destinationUrl,
     analitics: body.analitics,
     customUrl: body.customUrl,
     deleteAfterRead: body.deleteAfterRead,
     password: body.password,
+    deleteTime: body.deleteTime,
   });
   const returnData = await urlRec.insert();
   return res.json(returnData);
@@ -41,7 +45,12 @@ export const getUrl = async (req: Request, res: Response) => {
           deleteAfterRead: url.deleteAfterRead,
         },
       };
-  if (url.deleteAfterRead && !url.password) {
+  console.log(url);
+
+  if (url.deleteTime < Math.floor(new Date().getTime() / 1000)) {
+    urlRec.delete();
+    throw new CustomError("This url doesn't exist", 404);
+  } else if (url.deleteAfterRead && !url.password) {
     urlRec.delete();
   }
   return res.json(returnData);

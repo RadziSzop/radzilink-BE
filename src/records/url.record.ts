@@ -15,8 +15,11 @@ let currentDBIndex: number;
     .sort({ index: -1 })
     .limit(1)
     .toArray();
-  if (typeof index[0].index !== "number") {
-    throw new Error("Couldn't get current DB index.");
+
+  if (index.length !== 0) {
+    if (typeof index[0].index !== "number") {
+      throw new Error("Couldn't get current DB index.");
+    }
   }
   currentDBIndex = index.length > 0 ? index[0].index : 0;
   console.log({ currentDBIndex });
@@ -29,6 +32,7 @@ export class UrlRecord implements UrlRecordInterface {
   readonly destinationUrl: string;
   readonly customUrl?: string | null;
   readonly password?: string | null;
+  readonly deleteTime?: number | null;
   readonly deleteAfterRead?: boolean;
   readonly analitics?: boolean;
   constructor({
@@ -39,6 +43,7 @@ export class UrlRecord implements UrlRecordInterface {
     customUrl,
     deleteAfterRead,
     password,
+    deleteTime,
   }: UrlConstructorInterface) {
     console.log({ encodedIndex, customUrl });
 
@@ -56,6 +61,7 @@ export class UrlRecord implements UrlRecordInterface {
     this.customUrl = customUrl;
     this.deleteAfterRead = deleteAfterRead;
     this.password = password;
+    this.deleteTime = deleteTime;
   }
 
   async insert() {
@@ -63,13 +69,14 @@ export class UrlRecord implements UrlRecordInterface {
       if (!Boolean(this.customUrl)) {
         this.encodedIndex = encode(++currentDBIndex);
       }
-
+      console.log("aaaa", this.deleteTime);
       const { upsertedId } = await linksDB.updateOne(
         {
           encodedIndex: this.encodedIndex,
         },
         {
           $setOnInsert: {
+            deleteTime: this.deleteTime ? this.deleteTime : false,
             destinationUrl: this.destinationUrl,
             password: this.password ? await hashPassword(this.password) : null,
             deleteAfterRead: this.deleteAfterRead
@@ -105,6 +112,7 @@ export class UrlRecord implements UrlRecordInterface {
       destinationUrl: this.destinationUrl,
       analitics: this.analitics ?? false,
       deleteAfterRead: this.deleteAfterRead ?? false,
+      deleteTime: this.deleteTime ?? false,
       isProtected: Boolean(this.password),
     };
     return returnData;
