@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validate } from "src/utils/validate";
+import { validate } from "../utils/validate";
 import { getUrl, postUrl, getProtectedUrl } from "./url-routes";
 
 const urlRouter = Router();
