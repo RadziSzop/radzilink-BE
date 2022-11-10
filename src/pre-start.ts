@@ -11,9 +11,7 @@ const options = commandLineArgs([
   },
 ]);
 
-const result2 = dotenv.config({
-  path: path.join(__dirname, `../env/${String(options.env)}.env`),
-});
+const result2 = dotenv.config();
 
 if (result2.error) {
   throw result2.error;

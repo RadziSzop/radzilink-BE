@@ -7,7 +7,7 @@ const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
 
 export const postUrl = async (req: Request, res: Response) => {
   const body = req.body as postUrlBody;
-  console.log({ body });
+  console.log("aaaaaaaaaaaaaaa", { body });
 
   const urlRec = new UrlRecord({
     destinationUrl: body.destinationUrl,
@@ -22,16 +22,22 @@ export const postUrl = async (req: Request, res: Response) => {
 };
 
 export const getUrl = async (req: Request, res: Response) => {
+  console.log("b", req.body, req.params);
   const url = await UrlRecord.find(req.params.url);
+  console.log("c", url);
+
   const urlRec = new UrlRecord({
     _id: url._id,
     destinationUrl: url.destinationUrl,
     analitics: url.analitics,
     customUrl: url.isCustom ? url.customUrl : null,
     deleteAfterRead: url.deleteAfterRead,
+    deleteTime: url.deleteTime,
     password: url.password,
     encodedIndex: req.params.url,
   });
+  console.log("d", { urlRec });
+
   const returnData = url.password
     ? {
         isProtected: true,
@@ -45,11 +51,12 @@ export const getUrl = async (req: Request, res: Response) => {
           deleteAfterRead: url.deleteAfterRead,
         },
       };
-  console.log(url);
-
-  if (url.deleteTime < Math.floor(new Date().getTime() / 1000)) {
-    urlRec.delete();
-    throw new CustomError("This url doesn't exist", 404);
+  console.log("e", { returnData });
+  if (url.deleteTime) {
+    if (url.deleteTime < Math.floor(new Date().getTime() / 1000)) {
+      urlRec.delete();
+      throw new CustomError("This url doesn't exist", 404);
+    }
   } else if (url.deleteAfterRead && !url.password) {
     urlRec.delete();
   }

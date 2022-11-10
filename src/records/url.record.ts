@@ -76,7 +76,7 @@ export class UrlRecord implements UrlRecordInterface {
         },
         {
           $setOnInsert: {
-            deleteTime: this.deleteTime ? this.deleteTime : false,
+            deleteTime: this.deleteTime ? this.deleteTime : null,
             destinationUrl: this.destinationUrl,
             password: this.password ? await hashPassword(this.password) : null,
             deleteAfterRead: this.deleteAfterRead
@@ -112,7 +112,7 @@ export class UrlRecord implements UrlRecordInterface {
       destinationUrl: this.destinationUrl,
       analitics: this.analitics ?? false,
       deleteAfterRead: this.deleteAfterRead ?? false,
-      deleteTime: this.deleteTime ?? false,
+      deleteTime: this.deleteTime ?? null,
       isProtected: Boolean(this.password),
     };
     return returnData;
@@ -131,9 +131,12 @@ export class UrlRecord implements UrlRecordInterface {
 
   // find: (encodedIndex: string) => Promise<UrlDatabaseFind>;
   static async find(encodedIndex: string) {
+    console.log("finding!", { encodedIndex });
+
     const link = (await linksDB.findOne({
       encodedIndex: encodedIndex,
     })) as UrlDatabaseFind;
+    console.log("link", { link });
 
     if (link) {
       return link;
