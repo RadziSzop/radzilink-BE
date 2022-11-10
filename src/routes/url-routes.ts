@@ -1,8 +1,8 @@
 import { CustomError } from "@shared/errors";
 import { Request, Response } from "express";
-import { UrlRecord } from "src/records/url.record";
-import { getProtectedUrlBody, postUrlBody } from "src/types/urlRoutesTypes";
-import { comparePassword } from "src/utils/hash";
+import { UrlRecord } from "../records/url.record";
+import { getProtectedUrlBody, postUrlBody } from "../types/urlRoutesTypes";
+import { comparePassword } from "../utils/hash";
 const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
 
 export const postUrl = async (req: Request, res: Response) => {
