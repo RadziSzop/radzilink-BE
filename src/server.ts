@@ -10,12 +10,13 @@ import { CustomError } from "@shared/errors";
 import { NodeEnvs } from "@shared/enums";
 import { urlRouter } from "@routes/api";
 import cors from "cors";
+import { limiter } from "@shared/limiter";
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(limiter)
 if (envVars.nodeEnv === NodeEnvs.Dev) {
   app.use(morgan("dev"));
 }
