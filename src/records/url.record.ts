@@ -94,6 +94,9 @@ export class UrlRecord implements UrlRecordInterface {
       return upsertedId;
     };
     let upsertedId: false | ObjectId = false;
+    if(this.destinationUrl.includes("https://radzi.link") || this.destinationUrl.includes("http://radzi.link")){
+      throw new CustomError("Cannot short already shortened url", 400);
+    }
     while (!upsertedId) {
       upsertedId = await insertIfDoesntExist();
       if (upsertedId) {
