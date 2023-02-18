@@ -3,8 +3,17 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import { z } from "zod";
 const destinationUrlRegex =
   /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+const getUrlScheme = z.object({
+url: 
+z.string({
+  required_error: "Url is required",
+  invalid_type_error: "Url must be a string",
+}).max(8192)
+})
+const getProtectedUrlScheme = z.object({
 
-const postUrlSchema = z.object({
+})
+const postUrlScheme = z.object({
   destinationUrl: z
     .string({
       invalid_type_error: "Url must be a string. ",
@@ -50,11 +59,41 @@ const postUrlSchema = z.object({
     .optional()
     .or(z.null()),
 });
-type validationType = "postUrl";
-export const validate = (type: validationType): RequestHandler => {
+type validationType = "postUrl" | "getUrl" | "getProtectedUrl"
+
+// type validationType = "postUrl" | "getUrl";
+export const validate = (type:  validationType): RequestHandler => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (type === "postUrl") {
-      const validationOutput = await postUrlSchema.safeParseAsync(req.body);
+      const validationOutput = await postUrlScheme.safeParseAsync(req.body);
+      if (!validationOutput.success) {
+        const validationErrors = validationOutput.error.errors
+          .map((element) => {
+            console.log(element);
+
+            return element.message;
+          })
+          .join(" ");
+
+        throw new CustomError(validationErrors, 400);
+      }
+    }
+    else if (type === "getUrl"){
+      const validationOutput = await getUrlScheme.safeParseAsync(req.params);
+      if (!validationOutput.success) {
+        const validationErrors = validationOutput.error.errors
+          .map((element) => {
+            console.log(element);
+
+            return element.message;
+          })
+          .join(" ");
+
+        throw new CustomError(validationErrors, 400);
+      }
+    }
+    else if (type === "getProtectedUrl"){
+      const validationOutput = await getUrlScheme.safeParseAsync(req.params);
       if (!validationOutput.success) {
         const validationErrors = validationOutput.error.errors
           .map((element) => {

@@ -22,7 +22,7 @@ export const postUrl = async (req: Request, res: Response) => {
 };
 
 export const getUrl = async (req: Request, res: Response) => {
-  console.log("b", req.body, req.params);
+  console.log("b",  req.params);
   const url = await UrlRecord.find(req.params.url);
   console.log("c", url);
 

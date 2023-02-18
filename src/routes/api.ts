@@ -4,7 +4,7 @@ import { getUrl, postUrl, getProtectedUrl } from "./url-routes";
 
 const urlRouter = Router();
 urlRouter.post("/", validate("postUrl"), postUrl);
-urlRouter.get("/:url", getUrl);
+urlRouter.get("/:url",validate("postUrl"), getUrl);
 urlRouter.post("/:url", getProtectedUrl);
 // TODO: add validation
 
