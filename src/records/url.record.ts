@@ -21,7 +21,7 @@ let currentDBIndex: number;
       throw new Error("Couldn't get current DB index.");
     }
   }
-  currentDBIndex = index.length > 0 ? index[0].index : 0;
+  currentDBIndex = index.length > 0 ? (index[0].index as number) : 0;
   console.log({ currentDBIndex });
 })();
 const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
@@ -45,8 +45,6 @@ export class UrlRecord implements UrlRecordInterface {
     password,
     deleteTime,
   }: UrlConstructorInterface) {
-    console.log({ encodedIndex, customUrl });
-
     this.destinationUrl =
       destinationUrl.includes("https://") || destinationUrl.includes("http://")
         ? destinationUrl
@@ -69,7 +67,6 @@ export class UrlRecord implements UrlRecordInterface {
       if (!Boolean(this.customUrl)) {
         this.encodedIndex = encode(++currentDBIndex);
       }
-      console.log("aaaa", this.deleteTime);
       const { upsertedId } = await linksDB.updateOne(
         {
           encodedIndex: this.encodedIndex,
@@ -94,7 +91,10 @@ export class UrlRecord implements UrlRecordInterface {
       return upsertedId;
     };
     let upsertedId: false | ObjectId = false;
-    if(this.destinationUrl.includes("https://radzi.link") || this.destinationUrl.includes("http://radzi.link")){
+    if (
+      this.destinationUrl.includes("https://radzi.link") ||
+      this.destinationUrl.includes("http://radzi.link")
+    ) {
       throw new CustomError("Cannot short already shortened url", 400);
     }
     while (!upsertedId) {
@@ -108,7 +108,6 @@ export class UrlRecord implements UrlRecordInterface {
       }
     }
     // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
-    console.log("password", this.password);
 
     const returnData = {
       link: `${WEBURL}/${this.encodedIndex}`,
@@ -134,12 +133,9 @@ export class UrlRecord implements UrlRecordInterface {
 
   // find: (encodedIndex: string) => Promise<UrlDatabaseFind>;
   static async find(encodedIndex: string) {
-    console.log("finding!", { encodedIndex });
-
     const link = (await linksDB.findOne({
       encodedIndex: encodedIndex,
     })) as UrlDatabaseFind;
-    console.log("link", { link });
 
     if (link) {
       return link;

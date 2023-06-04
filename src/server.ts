@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(limiter)
+app.use(limiter);
 if (envVars.nodeEnv === NodeEnvs.Dev) {
   app.use(morgan("dev"));
 }

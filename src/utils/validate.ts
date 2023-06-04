@@ -6,23 +6,21 @@ const destinationUrlRegex =
 const getUrlScheme = z.object({
   url: z
     .string({
-      required_error: "Url is required",
-      invalid_type_error: "Url must be a string",
+      required_error: "Url is required. ",
+      invalid_type_error: "Url must be a string. ",
     })
     .max(8192),
 });
 const getProtectedUrlSchemeBody = z.object({
   password: z
     .string({ invalid_type_error: "Password must be a string. " })
-    .min(6, "Password is too short. ")
-    .max(128, "Password is too long. ")
     .trim(),
 });
 const getProtectedUrlSchemeParams = z.object({
   url: z
     .string({
-      required_error: "Url is required",
-      invalid_type_error: "Url must be a string",
+      required_error: "Url is required. ",
+      invalid_type_error: "Url must be a string. ",
     })
     .max(8192),
 });
@@ -69,7 +67,7 @@ const postUrlScheme = z.object({
     .number({
       invalid_type_error: "Delete after time must be a boolean",
     })
-    .min(Math.floor(new Date().getTime() / 1000), "You can't set past date")
+    .min(Math.floor(new Date().getTime() / 1000), "You can't set past date. ")
     .optional()
     .or(z.null()),
 });
@@ -103,19 +101,26 @@ export const validate = (type: validationType): RequestHandler => {
         await getProtectedUrlSchemeBody.safeParseAsync(req.body),
         await getProtectedUrlSchemeParams.safeParseAsync(req.params),
       ];
-      const validationErrors = validationOutput
-        .map((element) => {
-          if (!element.success) {
-            const validationErrors = element.error.errors
-              .map((error) => {
-                return error.message;
-              })
-              .join(" ");
-            return validationErrors;
-          }
-        })
-        .join("");
-      throw new CustomError(validationErrors, 400);
+      console.log(validationOutput.length);
+      if (validationOutput.every((element) => !element.success)) {
+        const validationErrors = validationOutput
+          .map((element) => {
+            console.log(element);
+
+            if (!element.success) {
+              console.log("a");
+
+              const validationErrors = element.error.errors
+                .map((error) => {
+                  return error.message;
+                })
+                .join(" ");
+              return validationErrors;
+            }
+          })
+          .join("");
+        throw new CustomError(validationErrors, 400);
+      }
     }
     next();
   };
