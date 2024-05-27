@@ -91,12 +91,6 @@ export class UrlRecord implements UrlRecordInterface {
       return upsertedId;
     };
     let upsertedId: false | ObjectId = false;
-    if (
-      this.destinationUrl.includes("https://radzi.link") ||
-      this.destinationUrl.includes("http://radzi.link")
-    ) {
-      throw new CustomError("Cannot short already shortened url", 400);
-    }
     while (!upsertedId) {
       upsertedId = await insertIfDoesntExist();
       if (upsertedId) {
@@ -107,8 +101,6 @@ export class UrlRecord implements UrlRecordInterface {
         throw new CustomError("This url is already taken.", 409);
       }
     }
-    // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
-
     const returnData = {
       link: `${WEBURL}/${this.encodedIndex}`,
       destinationUrl: this.destinationUrl,
