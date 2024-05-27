@@ -7,8 +7,6 @@ const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
 
 export const postUrl = async (req: Request, res: Response) => {
   const body = req.body as postUrlBody;
-  console.log("aaaaaaaaaaaaaaa", { body });
-
   const urlRec = new UrlRecord({
     destinationUrl: body.destinationUrl,
     analitics: body.analitics,
@@ -22,9 +20,7 @@ export const postUrl = async (req: Request, res: Response) => {
 };
 
 export const getUrl = async (req: Request, res: Response) => {
-  console.log("b", req.body, req.params);
   const url = await UrlRecord.find(req.params.url);
-  console.log("c", url);
 
   const urlRec = new UrlRecord({
     _id: url._id,
@@ -36,7 +32,6 @@ export const getUrl = async (req: Request, res: Response) => {
     password: url.password,
     encodedIndex: req.params.url,
   });
-  console.log("d", { urlRec });
 
   const returnData = url.password
     ? {
@@ -51,7 +46,6 @@ export const getUrl = async (req: Request, res: Response) => {
           deleteAfterRead: url.deleteAfterRead,
         },
       };
-  console.log("e", { returnData });
   if (url.deleteTime) {
     if (url.deleteTime < Math.floor(new Date().getTime() / 1000)) {
       urlRec.delete();

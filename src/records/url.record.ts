@@ -21,7 +21,7 @@ let currentDBIndex: number;
       throw new Error("Couldn't get current DB index.");
     }
   }
-  currentDBIndex = index.length > 0 ? index[0].index : 0;
+  currentDBIndex = index.length > 0 ? (index[0].index as number) : 0;
   console.log({ currentDBIndex });
 })();
 const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
@@ -45,8 +45,6 @@ export class UrlRecord implements UrlRecordInterface {
     password,
     deleteTime,
   }: UrlConstructorInterface) {
-    console.log({ encodedIndex, customUrl });
-
     this.destinationUrl =
       destinationUrl.includes("https://") || destinationUrl.includes("http://")
         ? destinationUrl
@@ -69,7 +67,6 @@ export class UrlRecord implements UrlRecordInterface {
       if (!Boolean(this.customUrl)) {
         this.encodedIndex = encode(++currentDBIndex);
       }
-      console.log("aaaa", this.deleteTime);
       const { upsertedId } = await linksDB.updateOne(
         {
           encodedIndex: this.encodedIndex,
@@ -104,9 +101,6 @@ export class UrlRecord implements UrlRecordInterface {
         throw new CustomError("This url is already taken.", 409);
       }
     }
-    // TODO:  from biggest index (non custom), add 1 until not found empty // when can't find empty index (3 tries)
-    console.log("password", this.password);
-
     const returnData = {
       link: `${WEBURL}/${this.encodedIndex}`,
       destinationUrl: this.destinationUrl,
@@ -131,12 +125,9 @@ export class UrlRecord implements UrlRecordInterface {
 
   // find: (encodedIndex: string) => Promise<UrlDatabaseFind>;
   static async find(encodedIndex: string) {
-    console.log("finding!", { encodedIndex });
-
     const link = (await linksDB.findOne({
       encodedIndex: encodedIndex,
     })) as UrlDatabaseFind;
-    console.log("link", { link });
 
     if (link) {
       return link;
