@@ -1,6 +1,8 @@
 import { CustomError } from "@shared/errors";
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { z } from "zod";
+const WEBURL = process.env.WEBURL ? process.env.WEBURL : "localhost:5173";
+
 const destinationUrlRegex =
   /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
 const getUrlScheme = z.object({
@@ -33,7 +35,10 @@ const postUrlScheme = z.object({
     .min(1, "Url can't be empty. ")
     .max(8192, "Url is too long. ")
     .regex(destinationUrlRegex, "Url is invalid. ")
-    .trim(),
+    .trim()
+    .refine((value) => {
+      return !value.includes(WEBURL.split("//")[1] ?? WEBURL);
+    }, "You can't short already shortened URLs"),
   customUrl: z
     .string({
       invalid_type_error: "CustomUrl must be a string. ",
